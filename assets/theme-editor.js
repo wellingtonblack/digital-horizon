@@ -1,47 +1,37 @@
-function hideProductModal() {
-  const productModal = document.querySelectorAll('product-modal[open]');
-  productModal && productModal.forEach(modal => modal.hide());
-}
+// Theme editor specific logic
 
-document.addEventListener('shopify:block:select', function(event) {
-  hideProductModal();
-  const blockSelectedIsSlide = event.target.classList.contains('slideshow__slide');
-  if (!blockSelectedIsSlide) return;
+/**
+ * @param {Event} event
+ */
+document.addEventListener('shopify:block:select', function (event) {
+  if (event.target instanceof HTMLElement) {
+    const slide = event.target.closest('slideshow-slide');
 
-  const parentSlideshowComponent = event.target.closest('slideshow-component');
-  parentSlideshowComponent.pause();
+    if (slide) {
+      /** @type {import('./slideshow').Slideshow | null} */
+      const slideshow = slide.closest('slideshow-component');
 
-  setTimeout(function() {
-    parentSlideshowComponent.slider.scrollTo({
-      left: event.target.offsetLeft
-    });
-  }, 200);
-});
+      if (slideshow) {
+        const index = Array.from(slide.parentElement?.children ?? []).indexOf(slide);
 
-document.addEventListener('shopify:block:deselect', function(event) {
-  const blockDeselectedIsSlide = event.target.classList.contains('slideshow__slide');
-  if (!blockDeselectedIsSlide) return;
-  const parentSlideshowComponent = event.target.closest('slideshow-component');
-  if (parentSlideshowComponent.autoplayButtonIsSetToPlay) parentSlideshowComponent.play();
-});
-
-document.addEventListener('shopify:section:load', () => {
-  hideProductModal();
-  const zoomOnHoverScript = document.querySelector('[id^=EnableZoomOnHover]');
-  if (!zoomOnHoverScript) return;
-  if (zoomOnHoverScript) {
-    const newScriptTag = document.createElement('script');
-    newScriptTag.src = zoomOnHoverScript.src;
-    zoomOnHoverScript.parentNode.replaceChild(newScriptTag, zoomOnHoverScript);
+        if (index !== -1) {
+          // Pause autoplay
+          slideshow.pause();
+          slideshow.select(index);
+        }
+      }
+    }
   }
 });
 
-document.addEventListener('shopify:section:reorder', () => hideProductModal());
+document.addEventListener('shopify:block:deselect', function (event) {
+  if (event.target instanceof HTMLElement) {
+    /** @type {import('./slideshow').Slideshow | null} */
+    const slideshow = event.target.closest('slideshow-component');
 
-document.addEventListener('shopify:section:select', () => hideProductModal());
-
-document.addEventListener('shopify:section:deselect', () => hideProductModal());
-
-document.addEventListener('shopify:inspector:activate', () => hideProductModal());
-
-document.addEventListener('shopify:inspector:deactivate', () => hideProductModal());
+    if (slideshow) {
+      // Resume playback
+      slideshow.resume();
+    }
+  }
+});
