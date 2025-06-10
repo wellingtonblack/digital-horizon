@@ -1,6 +1,496 @@
+{% doc %}
+  @prompt
+    crie um componente onde ele faça o calculo de frete puxando os dados corretamente
+
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .shipping-calculator-{{ ai_gen_id }} {
+    margin: {{ block.settings.margin_top }}px 0 {{ block.settings.margin_bottom }}px 0;
+    padding: {{ block.settings.padding }}px;
+    border-radius: {{ block.settings.border_radius }}px;
+    background-color: {{ block.settings.background_color }};
+    max-width: 100%;
+  }
+
+  .shipping-calculator__title-{{ ai_gen_id }} {
+    font-size: {{ block.settings.title_size }}px;
+    margin-bottom: 15px;
+    color: {{ block.settings.title_color }};
+  }
+
+  .shipping-calculator__form-{{ ai_gen_id }} {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .shipping-calculator__input-{{ ai_gen_id }} {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid {{ block.settings.input_border_color }};
+    border-radius: {{ block.settings.input_border_radius }}px;
+    font-size: 14px;
+  }
+
+  .shipping-calculator__button-{{ ai_gen_id }} {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: {{ block.settings.button_color }};
+    color: {{ block.settings.button_text_color }};
+    border: none;
+    border-radius: {{ block.settings.button_border_radius }}px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-align: center;}
+
+  .shipping-calculator__button-{{ ai_gen_id }}:hover {
+    background-color: {{ block.settings.button_hover_color }};
+  }
+
+  .shipping-calculator__results-{{ ai_gen_id }} {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid {{ block.settings.results_border_color }};
+    border-radius: {{ block.settings.border_radius }}px;
+    display: none;
+  }
+
+  .shipping-calculator__results-title-{{ ai_gen_id }} {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: {{ block.settings.title_color }};
+  }
+
+  .shipping-calculator__rates-{{ ai_gen_id }} {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .shipping-calculator__rate-{{ ai_gen_id }} {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid {{ block.settings.results_border_color }};
+  }
+
+  .shipping-calculator__rate-{{ ai_gen_id }}:last-child {
+    border-bottom: none;
+  }
+
+  .shipping-calculator__rate-name-{{ ai_gen_id }} {
+    font-weight:500;
+  }
+
+  .shipping-calculator__error-{{ ai_gen_id }} {
+    color: {{ block.settings.error_color }};
+    margin-top: 10px;
+    display: none;
+  }
+
+  .shipping-calculator__loading-{{ ai_gen_id }} {
+    display: none;
+    text-align: center;
+    margin-top: 15px;
+  }
+
+  .shipping-calculator__spinner-{{ ai_gen_id }} {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-left-color: {{ block.settings.button_color }};
+    border-radius: 50%;
+    animation: shipping-calculator-spinner-{{ ai_gen_id }} 1s linear infinite;
+  }
+
+  @keyframes shipping-calculator-spinner-{{ ai_gen_id }} {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media screen and (min-width: 768px) {
+    .shipping-calculator__zip-container-{{ ai_gen_id }} {
+      display: flex;
+      gap: 10px;
+    }
+
+    .shipping-calculator__zip-input-{{ ai_gen_id }} {
+      flex-grow: 1;
+    }
+
+    .shipping-calculator__button-container-{{ ai_gen_id }} {
+      min-width: 120px;
+    }
+  }
+{% endstyle %}
+
+<div class="shipping-calculator-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <h3 class="shipping-calculator__title-{{ ai_gen_id }}">{{ block.settings.title }}</h3>
+  
+  <div class="shipping-calculator__form-{{ ai_gen_id }}">
+    <div class="shipping-calculator__zip-container-{{ ai_gen_id }}">
+      <div class="shipping-calculator__zip-input-{{ ai_gen_id }}">
+        <input
+          type="text" 
+          id="shipping-calculator-zipcode-{{ ai_gen_id }}" 
+          class="shipping-calculator__input-{{ ai_gen_id }}" 
+          placeholder="{{ block.settings.zipcode_placeholder }}" 
+          aria-label="{{ block.settings.zipcode_placeholder }}"
+        >
+      </div>
+      <div class="shipping-calculator__button-container-{{ ai_gen_id }}">
+        <button 
+          type="button" 
+          class="shipping-calculator__button-{{ ai_gen_id }}" 
+          id="shipping-calculator-submit-{{ ai_gen_id }}">
+          {{ block.settings.button_text }}
+        </button>
+      </div>
+    </div>
+    
+    <div class="shipping-calculator__loading-{{ ai_gen_id }}" id="shipping-calculator-loading-{{ ai_gen_id }}">
+      <div class="shipping-calculator__spinner-{{ ai_gen_id }}"></div>
+      <span>{{ block.settings.loading_text }}</span>
+    </div>
+    
+    <div class="shipping-calculator__error-{{ ai_gen_id }}" id="shipping-calculator-error-{{ ai_gen_id }}"></div>
+    
+    <div class="shipping-calculator__results-{{ ai_gen_id }}" id="shipping-calculator-results-{{ ai_gen_id }}">
+      <h4 class="shipping-calculator__results-title-{{ ai_gen_id }}">{{ block.settings.results_title }}</h4>
+      <div class="shipping-calculator__rates-{{ ai_gen_id }}" id="shipping-calculator-rates-{{ ai_gen_id }}"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    class ShippingCalculator extends HTMLElement {
+      constructor() {
+        super();
+        this.calculatorId = '{{ ai_gen_id }}';
+        this.zipInput = document.getElementById(`shipping-calculator-zipcode-${this.calculatorId}`);
+        this.submitButton = document.getElementById(`shipping-calculator-submit-${this.calculatorId}`);
+        this.loadingElement = document.getElementById(`shipping-calculator-loading-${this.calculatorId}`);
+        this.errorElement = document.getElementById(`shipping-calculator-error-${this.calculatorId}`);
+        this.resultsElement = document.getElementById(`shipping-calculator-results-${this.calculatorId}`);
+        this.ratesContainer = document.getElementById(`shipping-calculator-rates-${this.calculatorId}`);
+        this.productId = {{ product.id | json }};
+        this.variantId = {{ product.selected_or_first_available_variant.id | json }};
+        this.quantity = 1;
+      }
+      
+      connectedCallback() {
+        this.submitButton.addEventListener('click', this.calculateShipping.bind(this));
+        this.zipInput.addEventListener('keypress', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            this.calculateShipping();
+          }
+        });
+      }
+      
+      calculateShipping() {
+        const zipCode = this.zipInput.value.trim();
+        
+        if (!zipCode) {
+          this.showError('{{ block.settings.error_empty_zipcode }}');
+          return;
+        }
+        
+        this.showLoading();
+        this.hideError();
+        this.hideResults();
+        
+        // Get the current variant ID from the page
+        const currentVariantId = document.querySelector('input[name="id"]')?.value || this.variantId;
+        
+        // Get the current quantity from the page
+        const quantityInput = document.querySelector('input[name="quantity"]');
+        const currentQuantity = quantityInput ? parseInt(quantityInput.value, 10) : this.quantity;
+        
+        const url = `/cart/shipping_rates.json?shipping_address[zip]=${encodeURIComponent(zipCode)}&shipping_address[country]=BR&item[quantity]=${currentQuantity}&item[id]=${currentVariantId}&item[properties][_source]=shipping_calculator`;
+        
+        fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            this.hideLoading();
+            
+            if (data.shipping_rates && data.shipping_rates.length > 0) {
+              this.displayShippingRates(data.shipping_rates);
+            } else {
+              this.showError('{{ block.settings.error_no_rates }}');
+            }
+          })
+          .catch(error => {
+            this.hideLoading();
+            this.showError('{{ block.settings.error_calculation }}');
+            console.error('Shipping calculation error:', error);
+          });
+      }
+      
+      displayShippingRates(rates) {
+        this.ratesContainer.innerHTML = '';
+        
+        rates.forEach(rate => {
+          const rateElement = document.createElement('div');
+          rateElement.className = `shipping-calculator__rate-${this.calculatorId}`;
+          const nameElement = document.createElement('span');
+          nameElement.className = `shipping-calculator__rate-name-${this.calculatorId}`;
+          nameElement.textContent = rate.name;
+          
+          const priceElement = document.createElement('span');
+          priceElement.className = `shipping-calculator__rate-price-${this.calculatorId}`;
+          priceElement.textContent = rate.price > 0 ? this.formatMoney(rate.price) : '{{ block.settings.free_shipping_text }}';
+          
+          rateElement.appendChild(nameElement);
+          rateElement.appendChild(priceElement);
+          
+          this.ratesContainer.appendChild(rateElement);
+        });
+        
+        this.showResults();
+      }
+      
+      formatMoney(cents) {
+        const value = (cents / 100).toFixed(2);
+        return `R$ ${value.replace('.', ',')}`;
+      }
+      
+      showLoading() {
+        this.loadingElement.style.display = 'block';
+      }
+      
+      hideLoading() {
+        this.loadingElement.style.display = 'none';
+      }
+      
+      showError(message) {
+        this.errorElement.textContent = message;
+        this.errorElement.style.display = 'block';
+      }
+      
+      hideError() {
+        this.errorElement.style.display = 'none';
+      }
+      
+      showResults() {
+        this.resultsElement.style.display = 'block';
+      }
+      
+      hideResults() {
+        this.resultsElement.style.display = 'none';
+      }
+    }
+    
+    customElements.define('shipping-calculator-{{ ai_gen_id }}', ShippingCalculator);
+    
+    // Initialize the component
+    const shippingCalculator = document.querySelector('.shipping-calculator-{{ ai_gen_id }}');
+    if (shippingCalculator) {
+      new ShippingCalculator();
+    }
+  })();
+</script>
+
 {% schema %}
- {
-   "name": "AI_Block",
-   "tag": "shopify-ai-generated-block"
- }
+{
+  "name": "Shipping Calculator",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Calculate Shipping"
+    },
+    {
+      "type": "text",
+      "id": "zipcode_placeholder",
+      "label": "Zipcode placeholder",
+      "default": "Enter your zipcode"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button text",
+      "default": "Calculate"
+    },
+    {
+      "type": "text",
+      "id": "loading_text",
+      "label": "Loading text",
+      "default": "Calculating..."
+    },
+    {
+      "type": "text",
+      "id": "results_title",
+      "label": "Results title",
+      "default": "Shipping options"
+    },
+    {
+      "type": "text",
+      "id": "free_shipping_text",
+      "label": "Free shipping text",
+      "default": "Free"
+    },
+    {
+      "type": "header",
+      "content": "Error Messages"
+    },
+    {
+      "type": "text",
+      "id": "error_empty_zipcode",
+      "label": "Empty zipcode error",
+      "default": "Please enter a zipcode"
+    },
+    {
+      "type": "text",
+      "id": "error_no_rates",
+      "label": "No rates found error",
+      "default": "No shipping rates found for this zipcode"
+    },
+    {
+      "type": "text",
+      "id": "error_calculation",
+      "label": "Calculation error",
+      "default": "Error calculating shipping. Please try again."
+    },
+    {
+      "type": "header",
+      "content": "Styling"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#f9f9f9"
+    },
+    {
+      "type": "color",
+      "id": "title_color",
+      "label": "Title color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_color",
+      "label": "Button hover color",
+      "default": "#333333"
+    },
+    {
+      "type": "color",
+      "id": "input_border_color",
+      "label": "Input border color",
+      "default": "#cccccc"
+    },
+    {
+      "type": "color",
+      "id": "results_border_color",
+      "label": "Results border color",
+      "default": "#e6e6e6"
+    },
+    {
+      "type": "color",
+      "id": "error_color",
+      "label": "Error text color",
+      "default": "#dc3545"
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "min": 14,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "label": "Title font size",
+      "default": 18
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Border radius",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "input_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Input border radius",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "button_border_radius",
+      "min": 0,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Button border radius",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "padding",
+      "min": 0,
+      "max": 40,
+      "step": 5,
+      "unit": "px",
+      "label": "Padding",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "margin_top",
+      "min": 0,
+      "max": 60,
+      "step": 5,
+      "unit": "px",
+      "label": "Top margin",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "min": 0,
+      "max": 60,
+      "step": 5,
+      "unit": "px",
+      "label": "Bottom margin",
+      "default": 20
+    }
+  ],
+  "presets": [
+    {
+      "name": "Shipping Calculator"
+    }
+  ]
+}
 {% endschema %}
