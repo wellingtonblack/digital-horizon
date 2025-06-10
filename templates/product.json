@@ -6,7 +6,8 @@
  * or related systems. Please exercise caution as any changes
  * made to this file may be overwritten.
  * ------------------------------------------------------------
- */{
+ */
+{
   "sections": {
     "main": {
       "type": "product-information",
@@ -68,6 +69,7 @@
               "type": "group",
               "name": "Header",
               "settings": {
+                "link": "",
                 "open_in_new_tab": false,
                 "content_direction": "column",
                 "vertical_on_mobile": true,
@@ -137,6 +139,12 @@
                     "type_preset": "paragraph",
                     "width": "100%",
                     "alignment": "left",
+                    "font": "var(--font-body--family)",
+                    "font_size": "1rem",
+                    "line_height": "normal",
+                    "letter_spacing": "normal",
+                    "case": "none",
+                    "color": "var(--color-foreground)",
                     "padding-block-start": 4,
                     "padding-block-end": 0,
                     "padding-inline-start": 0,
@@ -149,6 +157,36 @@
                 "text_xrnftG",
                 "price_tVjtKg"
               ]
+            },
+            "ai_gen_block_5fbcf8d_tWRtyk": {
+              "type": "ai_gen_block_5fbcf8d",
+              "settings": {
+                "title": "Calculate Shipping",
+                "zipcode_placeholder": "Enter your zipcode",
+                "button_text": "Calculate",
+                "loading_text": "Calculating...",
+                "results_title": "Shipping options",
+                "free_shipping_text": "Free",
+                "error_empty_zipcode": "Please enter a zipcode",
+                "error_no_rates": "No shipping rates found for this zipcode",
+                "error_calculation": "Error calculating shipping. Please try again.",
+                "background_color": "#f9f9f9",
+                "title_color": "#000000",
+                "button_color": "#000000",
+                "button_text_color": "#ffffff",
+                "button_hover_color": "#333333",
+                "input_border_color": "#cccccc",
+                "results_border_color": "#e6e6e6",
+                "error_color": "#dc3545",
+                "title_size": 18,
+                "border_radius": 8,
+                "input_border_radius": 4,
+                "button_border_radius": 4,
+                "padding": 20,
+                "margin_top": 20,
+                "margin_bottom": 20
+              },
+              "blocks": {}
             },
             "divider_VJhene": {
               "type": "_divider",
@@ -220,6 +258,7 @@
               "type": "group",
               "name": "Policies",
               "settings": {
+                "link": "",
                 "open_in_new_tab": false,
                 "content_direction": "column",
                 "vertical_on_mobile": true,
@@ -258,6 +297,7 @@
                   "type": "group",
                   "name": "Shipping policy",
                   "settings": {
+                    "link": "",
                     "open_in_new_tab": false,
                     "content_direction": "row",
                     "vertical_on_mobile": false,
@@ -298,6 +338,7 @@
                       "settings": {
                         "icon": "truck",
                         "width": 16,
+                        "link": "",
                         "open_in_new_tab": false
                       },
                       "blocks": {}
@@ -338,6 +379,7 @@
                   "type": "group",
                   "name": "Return policy",
                   "settings": {
+                    "link": "",
                     "open_in_new_tab": false,
                     "content_direction": "row",
                     "vertical_on_mobile": false,
@@ -378,6 +420,7 @@
                       "settings": {
                         "icon": "return",
                         "width": 16,
+                        "link": "",
                         "open_in_new_tab": false
                       },
                       "blocks": {}
@@ -449,6 +492,7 @@
           },
           "block_order": [
             "group_icgrde",
+            "ai_gen_block_5fbcf8d_tWRtyk",
             "divider_VJhene",
             "variant_picker_R3rGDr",
             "buy_buttons_eYQEYi",
@@ -537,6 +581,7 @@
             "group_zGryyP": {
               "type": "group",
               "settings": {
+                "link": "",
                 "open_in_new_tab": false,
                 "content_direction": "column",
                 "vertical_on_mobile": true,
@@ -607,6 +652,12 @@
                     "type_preset": "h6",
                     "width": "100%",
                     "alignment": "left",
+                    "font": "var(--font-body--family)",
+                    "font_size": "1rem",
+                    "line_height": "normal",
+                    "letter_spacing": "normal",
+                    "case": "none",
+                    "color": "var(--color-foreground)",
                     "padding-block-start": 0,
                     "padding-block-end": 0,
                     "padding-inline-start": 0,
